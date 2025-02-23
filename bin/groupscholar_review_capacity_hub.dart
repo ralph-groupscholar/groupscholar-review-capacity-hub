@@ -11,6 +11,7 @@ void main(List<String> arguments) async {
     ..addCommand('list-reviewers')
     ..addCommand('summary')
     ..addCommand('log-assignment')
+    ..addCommand('capacity-alerts')
     ..addFlag('help', abbr: 'h', negatable: false);
 
   parser.commands['log-assignment']
@@ -23,6 +24,18 @@ void main(List<String> arguments) async {
     ..addOption('submitted', help: 'Application submitted date (YYYY-MM-DD)')
     ..addOption('due', help: 'Review due date (YYYY-MM-DD)')
     ..addOption('status', help: 'Assignment status (assigned|completed|overdue|withdrawn)');
+
+  parser.commands['capacity-alerts']
+    ?..addOption(
+      'due-window',
+      help: 'Upcoming due window in days',
+      defaultsTo: '7',
+    )
+    ..addOption(
+      'min-utilization',
+      help: 'Utilization threshold (0-1 or percentage)',
+      defaultsTo: '0.8',
+    );
 
   ArgResults results;
   try {
@@ -53,6 +66,9 @@ void main(List<String> arguments) async {
           break;
         case 'log-assignment':
           exitCode = (await _handleLogAssignment(db, results.command!)).exitCode;
+          break;
+        case 'capacity-alerts':
+          exitCode = (await _handleCapacityAlerts(db, results.command!)).exitCode;
           break;
         default:
           stderr.writeln('Unknown command: $command');
@@ -109,6 +125,20 @@ Future<CommandResult> _handleLogAssignment(DbClient db, ArgResults args) async {
   );
 }
 
+Future<CommandResult> _handleCapacityAlerts(DbClient db, ArgResults args) async {
+  final dueWindowRaw = args['due-window'] as String? ?? '7';
+  final minUtilizationRaw = args['min-utilization'] as String? ?? '0.8';
+
+  final dueWindow = parsePositiveInt(dueWindowRaw, label: 'due-window');
+  final minUtilization = parseUtilization(minUtilizationRaw);
+
+  return capacityAlerts(
+    db,
+    dueWindowDays: dueWindow,
+    minUtilization: minUtilization,
+  );
+}
+
 void _printUsage(ArgParser parser) {
   stdout.writeln('Review Capacity Hub CLI');
   stdout.writeln('');
@@ -118,6 +148,7 @@ void _printUsage(ArgParser parser) {
   stdout.writeln('  list-reviewers   List reviewer capacity and active assignments');
   stdout.writeln('  summary          Show overall reviewer capacity summary');
   stdout.writeln('  log-assignment   Log a new review assignment');
+  stdout.writeln('  capacity-alerts  Show reviewer utilization and upcoming due alerts');
   stdout.writeln('');
   stdout.writeln('Global options:');
   stdout.writeln(parser.usage);
@@ -126,4 +157,5 @@ void _printUsage(ArgParser parser) {
   stdout.writeln('  dart run list-reviewers');
   stdout.writeln('  dart run summary');
   stdout.writeln('  dart run log-assignment --reviewer "Avery Clark" --application-id APP-102 --due 2026-02-20');
+  stdout.writeln('  dart run capacity-alerts --due-window 10 --min-utilization 85%');
 }

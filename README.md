@@ -6,6 +6,7 @@ A Dart-based CLI that tracks reviewer capacity, assignments, and upcoming due da
 - List reviewer capacity and active assignment counts.
 - Generate a summary of active reviewers, load averages, and upcoming due dates.
 - Log new review assignments with application metadata.
+- Alert on reviewer utilization thresholds and upcoming due dates.
 - PostgreSQL schema, views, and seed data included.
 
 ## Tech Stack
@@ -50,6 +51,10 @@ dart run log-assignment \
   --due 2026-02-18 \
   --applicant "Micah Brooks" \
   --stage review
+
+# Review capacity alerts
+
+dart run capacity-alerts --due-window 10 --min-utilization 85%
 ```
 
 ## Tests

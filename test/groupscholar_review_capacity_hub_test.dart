@@ -34,4 +34,28 @@ void main() {
       expect(() => normalizeStage('unknown'), throwsFormatException);
     });
   });
+
+  group('parsePositiveInt', () {
+    test('parses positive int', () {
+      expect(parsePositiveInt('12', label: 'window'), 12);
+    });
+
+    test('rejects non-positive int', () {
+      expect(() => parsePositiveInt('0', label: 'window'), throwsFormatException);
+    });
+  });
+
+  group('parseUtilization', () {
+    test('parses decimal', () {
+      expect(parseUtilization('0.75'), closeTo(0.75, 0.0001));
+    });
+
+    test('parses percentage', () {
+      expect(parseUtilization('85%'), closeTo(0.85, 0.0001));
+    });
+
+    test('rejects out of range', () {
+      expect(() => parseUtilization('1.2'), throwsFormatException);
+    });
+  });
 }
