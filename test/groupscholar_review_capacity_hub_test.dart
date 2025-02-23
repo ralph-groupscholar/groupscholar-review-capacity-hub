@@ -58,4 +58,22 @@ void main() {
       expect(() => parseUtilization('1.2'), throwsFormatException);
     });
   });
+
+  group('capacityStatus', () {
+    test('flags over capacity', () {
+      expect(capacityStatus(6, 5), 'over');
+    });
+
+    test('flags at capacity', () {
+      expect(capacityStatus(5, 5), 'at');
+    });
+
+    test('flags near capacity at threshold', () {
+      expect(capacityStatus(4, 5, warnThreshold: 0.8), 'near');
+    });
+
+    test('flags available when under threshold', () {
+      expect(capacityStatus(2, 5, warnThreshold: 0.8), 'available');
+    });
+  });
 }

@@ -152,10 +152,14 @@ Future<CommandResult> capacityAlerts(
 
 Future<CommandResult> capacityAlerts(
   DbClient db, {
-  int lookaheadDays = 7,
+  int dueWindowDays = 7,
+  double minUtilization = 0.8,
 }) async {
-  if (lookaheadDays <= 0) {
-    throw FormatException('lookahead days must be a positive integer.');
+  if (dueWindowDays <= 0) {
+    throw FormatException('due-window days must be a positive integer.');
+  }
+  if (minUtilization <= 0 || minUtilization > 1) {
+    throw FormatException('min-utilization must be between 0 and 1.');
   }
 
   final rows = await db.query('''
@@ -175,19 +179,23 @@ Future<CommandResult> capacityAlerts(
      WHERE r.active = true
      GROUP BY r.id
      ORDER BY active_assignments DESC, r.name;
-  ''', parameters: {'lookahead': lookaheadDays});
+  ''', parameters: {'lookahead': dueWindowDays});
 
   if (rows.isEmpty) {
     stdout.writeln('No active reviewers found.');
     return CommandResult(0);
   }
 
-  stdout.writeln('Capacity Alerts (next $lookaheadDays days)');
+  stdout.writeln('Capacity Alerts (next $dueWindowDays days)');
   stdout.writeln('-----------------------------------------');
   for (final row in rows) {
     final activeAssignments = row[5] as int;
     final capacity = row[3] as int;
-    final status = capacityStatus(activeAssignments, capacity);
+    final status = capacityStatus(
+      activeAssignments,
+      capacity,
+      warnThreshold: minUtilization,
+    );
     final dueSoon = row[6] as int;
     stdout.writeln(
       '${row[0]} | ${row[1]} | ${row[2]} | load $activeAssignments/$capacity '

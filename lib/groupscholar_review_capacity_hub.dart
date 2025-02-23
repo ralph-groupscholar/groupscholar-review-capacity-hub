@@ -2,6 +2,7 @@ library groupscholar_review_capacity_hub;
 
 export 'src/commands.dart'
     show
+        capacityStatus,
         parseDate,
         normalizeStage,
         normalizeStatus,
